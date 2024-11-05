@@ -161,6 +161,17 @@ nav ul li {
   color:white;
 }
 
+.toggle-button {
+  background: rgba(255, 255, 255, 0.2); 
+  backdrop-filter: blur(10px); 
+  margin-bottom: 20px;
+  outline: none;
+  border: none;
+  border-radius: 4px;
+  color: white;
+  font-family: 'Times New Roman', Times, serif;
+}
+
 /*  search   */
 .search-container {
   padding: 20px;
@@ -351,6 +362,8 @@ nav ul li {
   border: none;
   outline: none;
   border-radius: 4px;
+  font-family: 'Times New Roman', Times, serif;
+  color: white;
 }
 
 .navigation-buttons button:hover {

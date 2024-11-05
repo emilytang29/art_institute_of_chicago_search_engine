@@ -16,6 +16,7 @@ interface Artwork {
   image_id: string;
   artist_display: string;
   date_display: string;
+  artwork_type_title: string;
 }
 
 const mockArtworks: Artwork[] = [
@@ -25,6 +26,7 @@ const mockArtworks: Artwork[] = [
     image_id: "12345",
     artist_display: "Artist One",
     date_display: "2020",
+    artwork_type_title: "painting"
   },
   {
     id: 2,
@@ -32,6 +34,7 @@ const mockArtworks: Artwork[] = [
     image_id: "67890",
     artist_display: "Artist Two",
     date_display: "2021",
+    artwork_type_title: "sculpture"
   },
 ];
 
@@ -176,59 +179,84 @@ function Search() {
   // return <div className="content-box">Search</div>;
 }
 
-// GALLERY FUNCTIONALITY
 function Gallery() {
   const [artworks, setArtworks] = useState<Artwork[]>([]);
   const [page, setPage] = useState(1);
   const [isLoading, setIsLoading] = useState(false);
+  const [showPaintingsOnly, setShowPaintingsOnly] = useState(false);
   const limit = 100;
 
   useEffect(() => {
-    setIsLoading(true);
+    const fetchArtworks = async () => {
+      setIsLoading(true);
+      const apiAvailable = true;
 
-    const apiAvailable = true;
+      try {
+        if (apiAvailable) {
+          const response = await axios.get(`https://api.artic.edu/api/v1/artworks?page=${page}&limit=${limit}`);
+          const artData: Artwork[] = response.data.data;
 
-    if (apiAvailable) {
-      axios.get(`https://api.artic.edu/api/v1/artworks?page=${page}&limit=${limit}`)
-      .then(response => {
-        const artData: Artwork[] = response.data.data;
-        setArtworks(prevArtworks => [...prevArtworks, ...artData]);
-        setIsLoading(false);
-      })
-      .catch(error => {
+          const filteredArtworks = showPaintingsOnly
+            ? artData.filter((artwork) =>
+                artwork.artwork_type_title && artwork.artwork_type_title.toLowerCase().includes("painting")
+              )
+            : artData;
+
+          setArtworks((prevArtworks) => [...prevArtworks, ...filteredArtworks]);
+        } else {
+          setArtworks(mockArtworks); 
+        }
+      } catch (error) {
         console.error("Error fetching artworks:", error);
+      } finally {
         setIsLoading(false);
-      });
-    } else {
-      // Use mock data when API is not available
-      setArtworks(prevArtworks => [...prevArtworks, ...mockArtworks]);
-      setIsLoading(false);
-    }
-  }, [page]);
+      }
+    };
+
+    fetchArtworks();
+  }, [page, showPaintingsOnly]); 
+
+  const togglePaintingsOnly = () => {
+    setShowPaintingsOnly((prev) => !prev);
+    setPage(1);  
+    setArtworks([]); 
+  };
 
   const loadMore = () => {
-    setPage(prevPage => prevPage + 1);
+    setPage((prevPage) => prevPage + 1);
   };
 
   return (
     <div className="gallery-container">
+      <button onClick={togglePaintingsOnly} className="toggle-button">
+        {showPaintingsOnly ? "Show All Artworks" : "Show Only Paintings"}
+      </button>
       <div className="artworks-grid">
-        {artworks.map((artwork) => (
-          <Link to={`/artwork/${artwork.id}`} key={artwork.id} className="artwork-item">
-            <img 
-              src={`https://www.artic.edu/iiif/2/${artwork.image_id}/full/200,/0/default.jpg`} 
-              alt={artwork.title} 
-              className="artwork-image"
-            />
-            <p>{artwork.title}</p>
-          </Link>
-        ))}
+        {artworks.length > 0 ? (
+          artworks.map((artwork) => (
+            <Link to={`/artwork/${artwork.id}`} key={artwork.id} className="artwork-item">
+              <img
+                src={`https://www.artic.edu/iiif/2/${artwork.image_id}/full/200,/0/default.jpg`}
+                alt={artwork.title}
+                className="artwork-image"
+              />
+              <p>{artwork.title}</p>
+            </Link>
+          ))
+        ) : (
+          <p>No artworks found.</p>
+        )}
       </div>
       {isLoading && <p className="loading-text">Loading more artworks...</p>}
-      {!isLoading && <button className="load_more_button" onClick={loadMore}>Load More</button>}
+      {!isLoading && (
+        <button className="load_more_button" onClick={loadMore}>
+          Load More
+        </button>
+      )}
     </div>
   );
 }
+
 
 // DETAIL VIEW FUNCTIONALITY
 function ArtworkDetail() {
